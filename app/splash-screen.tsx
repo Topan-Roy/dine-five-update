@@ -39,11 +39,13 @@ const SplashScreen = () => {
     >
       <View className="flex-1 items-center justify-center">
         <Image
-          source={require("@/assets/images/splash-logo.svg")}
+          source={require("@/assets/images/icon.png")}
           contentFit="contain"
           style={{
             height: 320,
             width: 320,
+            borderRadius: 160,
+            backgroundColor: "#00000010",
           }}
         />
       </View>

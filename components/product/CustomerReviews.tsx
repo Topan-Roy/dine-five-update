@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import React from "react";
 import { Text, View } from "react-native";
+import { normalizeImageUri } from "@/utils/userAvatar";
 
 interface Review {
   _id: string;
@@ -80,23 +81,25 @@ const getReviewerName = (review: any) =>
   ) || "Anonymous User";
 
 const getReviewerImage = (review: any) =>
-  pickString(
-    review?.customerId?.profilePic,
-    review?.customerId?.avatar,
-    review?.customerId?.image,
-    review?.customer?.profilePic,
-    review?.customer?.avatar,
-    review?.customer?.image,
-    review?.author?.profilePic,
-    review?.author?.avatar,
-    review?.user?.profilePic,
-    review?.user?.avatar,
-    review?.orderId?.customerId?.profilePic,
-    review?.orderId?.customerId?.avatar,
-    review?.orderId?.customerId?.image,
-    review?.orderId?.userId?.profilePic,
-    review?.orderId?.userId?.avatar,
-    review?.orderId?.userId?.image,
+  normalizeImageUri(
+    pickString(
+      review?.customerId?.profilePic,
+      review?.customerId?.avatar,
+      review?.customerId?.image,
+      review?.customer?.profilePic,
+      review?.customer?.avatar,
+      review?.customer?.image,
+      review?.author?.profilePic,
+      review?.author?.avatar,
+      review?.user?.profilePic,
+      review?.user?.avatar,
+      review?.orderId?.customerId?.profilePic,
+      review?.orderId?.customerId?.avatar,
+      review?.orderId?.customerId?.image,
+      review?.orderId?.userId?.profilePic,
+      review?.orderId?.userId?.avatar,
+      review?.orderId?.userId?.image,
+    ),
   ) || "https://i.ibb.co.com/WvT5LftP/iconprofile.jpg";
 
 const getReviewComment = (review: any) => {

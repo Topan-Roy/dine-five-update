@@ -3,11 +3,11 @@ import { Image } from "expo-image";
 import { StatusBar } from "expo-status-bar";
 import React from "react";
 import {
+  ImageBackground,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   View,
-  ImageBackground,
 } from "react-native";
 
 const Login = () => {
