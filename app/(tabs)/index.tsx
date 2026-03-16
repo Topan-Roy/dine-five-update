@@ -4,7 +4,7 @@ import {
   useRestaurantStore,
 } from "@/stores/useRestaurantStore";
 import { Ionicons } from "@expo/vector-icons";
-import { getUserAvatarUri } from "@/utils/userAvatar";
+import { getUserAvatarUri, normalizeImageUri } from "@/utils/userAvatar";
 import * as Location from "expo-location";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -78,11 +78,13 @@ const normalizeBanner = (payload: any): BannerData => {
         banner?.actionText,
       ) || FALLBACK_PROMO.ctaText,
     image:
-      pickString(
-        banner?.image,
-        banner?.imageUrl,
-        banner?.bannerImage,
-        banner?.thumbnail,
+      normalizeImageUri(
+        pickString(
+          banner?.image,
+          banner?.imageUrl,
+          banner?.bannerImage,
+          banner?.thumbnail,
+        ),
       ) || FALLBACK_PROMO.image,
   };
 };

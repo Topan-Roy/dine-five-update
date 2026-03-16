@@ -1,5 +1,6 @@
 // restaurantService.ts
 import { API_BASE_URL } from "@/utils/api";
+import { normalizeImageUri } from "@/utils/userAvatar";
 
 export interface Restaurant {
   providerId: string;
@@ -137,7 +138,9 @@ const normalizeRestaurant = (item: any, index: number): Restaurant => {
     state: String(item?.state ?? ""),
     phoneNumber: String(item?.phoneNumber ?? item?.phone ?? ""),
     contactEmail: String(item?.contactEmail ?? item?.email ?? ""),
-    profile: String(item?.profile ?? item?.image ?? item?.imageUrl ?? ""),
+    profile: normalizeImageUri(
+      item?.profile ?? item?.image ?? item?.imageUrl ?? "",
+    ),
     isVerify: Boolean(item?.isVerify ?? item?.isVerified ?? false),
     verificationStatus: String(item?.verificationStatus ?? ""),
     availableFoods: toNumber(item?.availableFoods ?? item?.foodCount, 0),
