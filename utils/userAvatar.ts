@@ -17,15 +17,12 @@ export const normalizeImageUri = (value: unknown): string => {
 
   if (
     raw.startsWith("https://") ||
+    raw.startsWith("http://") ||
     raw.startsWith("file://") ||
     raw.startsWith("content://") ||
     raw.startsWith("data:image")
   ) {
     return raw;
-  }
-
-  if (raw.startsWith("http://")) {
-    return `https://${raw.slice("http://".length)}`;
   }
 
   if (raw.startsWith("//")) {

@@ -104,8 +104,8 @@ export default function ProductDetails() {
     setHeroImageError(false);
     setHeroImageUri(
       normalizedProductImage ||
-        normalizedRestaurantProfile ||
-        DEFAULT_PRODUCT_IMAGE,
+      normalizedRestaurantProfile ||
+      DEFAULT_PRODUCT_IMAGE,
     );
   }, [normalizedProductImage, normalizedRestaurantProfile]);
 
@@ -233,7 +233,7 @@ export default function ProductDetails() {
         {/* White Content Container */}
         <View className="flex-1 bg-white rounded-t-3xl px-6 pt-8 pb-32 min-h-screen">
           {/* Stats Row */}
-          <View className="flex-row justify-between mb-6 border border-[#E3E6F0] rounded-lg p-3 bg-white shadow-sm">
+          {/* <View className="flex-row justify-between mb-6 border border-[#E3E6F0] rounded-lg p-3 bg-white shadow-sm">
             <View className="flex-row items-center gap-1">
               <Ionicons name="star" size={14} color="#FFC107" />
               <Text className="text-sm font-bold text-[#1F2A33]">
@@ -255,7 +255,7 @@ export default function ProductDetails() {
                 {product.time}mins
               </Text>
             </View>
-          </View>
+          </View> */}
 
           {/* Restaurant Info */}
           {/* <View className="flex-row items-center gap-3 mb-4">

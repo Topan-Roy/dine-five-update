@@ -64,14 +64,17 @@ export default function CustomerSupportScreen() {
     } else {
       // Try to find if there's an existing conversation
       const result = await fetchConversations();
-      const convs = result?.conversations || [];
+      const convs = result?.conversations || (Array.isArray(result) ? result : []);
 
       if (convs.length > 0) {
         // Find existing conversation with this provider or take the first one
         const targetConv = providerId
           ? convs.find(
             (c: any) =>
-              c.providerId === providerId || c.provider?.id === providerId,
+              c.providerId === providerId ||
+              c.provider?.id === providerId ||
+              c.provider?._id === providerId ||
+              c.adminId === providerId,
           )
           : convs[0];
 
@@ -91,9 +94,9 @@ export default function CustomerSupportScreen() {
         const formattedMessages = rawMessages.map((m: any) => ({
           id: m.id || m._id || m.messageId || Math.random().toString(),
           text: m.content || m.text || m.message || "",
-          // If sender role is PROVIDER, it's support (Left side)
+          // If sender role is PROVIDER or ADMIN, it's support (Left side)
           isSupport: m.sender?.role
-            ? m.sender.role === "PROVIDER"
+            ? m.sender.role === "PROVIDER" || m.sender.role === "ADMIN"
             : (m.senderId !== user?.id && m.senderId !== user?._id),
           time: new Date(m.createdAt).toLocaleTimeString([], {
             hour: "2-digit",
@@ -270,7 +273,7 @@ export default function CustomerSupportScreen() {
     try {
       let result;
       // We always use sendMessageToProvider because the user confirmed
-      // /api/chat/message/customer-to-provider is the working endpoint in Postman
+      // /api/v1/chat/message/customer-to-provider is the working endpoint
       if (providerId) {
         result = await sendMessageToProvider(
           providerId,
@@ -311,13 +314,15 @@ export default function CustomerSupportScreen() {
         if (!conversationId) {
           // If first message, we need to refresh to get the new conversationId
           const list = await fetchConversations();
-          const convs = list?.conversations || [];
+          const convs = list?.conversations || (Array.isArray(list) ? list : []);
           if (convs.length > 0) {
             const target = providerId
               ? convs.find(
                 (c: any) =>
                   c.providerId === providerId ||
-                  c.provider?.id === providerId,
+                  c.provider?.id === providerId ||
+                  c.provider?._id === providerId ||
+                  c.adminId === providerId,
               )
               : convs[0];
             if (target) setConversationId(target.id || target._id);
@@ -354,7 +359,8 @@ export default function CustomerSupportScreen() {
       </View>
 
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "padding"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
         className="flex-1"
       >
         <ScrollView
@@ -363,6 +369,9 @@ export default function CustomerSupportScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingVertical: 20 }}
           onContentSizeChange={() =>
+            scrollViewRef.current?.scrollToEnd({ animated: true })
+          }
+          onLayout={() =>
             scrollViewRef.current?.scrollToEnd({ animated: true })
           }
         >

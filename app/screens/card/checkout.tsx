@@ -1,35 +1,180 @@
 import { useStore } from "@/stores/stores";
+import { useRestaurantStore } from "@/stores/useRestaurantStore";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { StripeProvider, useStripe } from "@stripe/stripe-react-native";
+import * as Location from "expo-location";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, Alert, Modal, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  Modal,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+const toNumber = (value: unknown, fallback = 0): number => {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const parsed = Number(value.replace(/[^0-9.-]/g, ""));
+    return Number.isFinite(parsed) ? parsed : fallback;
+  }
+  return fallback;
+};
+
+const formatMoney = (value: number) => `$${value.toFixed(2)}`;
+
+const formatTaxRate = (value: number) => `${(value * 100).toFixed(0)}%`;
+
+const normalizeTaxRate = (value: unknown): number => {
+  const rate = toNumber(value, 0);
+  return rate > 1 ? rate / 100 : rate;
+};
+
+const extractStateName = (...values: unknown[]): string => {
+  for (const value of values) {
+    if (typeof value === "string" && value.trim()) {
+      return value.trim();
+    }
+  }
+  return "";
+};
+
+const US_STATE_CODES: Record<string, string> = {
+  Alabama: "AL",
+  Alaska: "AK",
+  Arizona: "AZ",
+  Arkansas: "AR",
+  California: "CA",
+  Colorado: "CO",
+  Connecticut: "CT",
+  Delaware: "DE",
+  Florida: "FL",
+  Georgia: "GA",
+  Hawaii: "HI",
+  Idaho: "ID",
+  Illinois: "IL",
+  Indiana: "IN",
+  Iowa: "IA",
+  Kansas: "KS",
+  Kentucky: "KY",
+  Louisiana: "LA",
+  Maine: "ME",
+  Maryland: "MD",
+  Massachusetts: "MA",
+  Michigan: "MI",
+  Minnesota: "MN",
+  Mississippi: "MS",
+  Missouri: "MO",
+  Montana: "MT",
+  Nebraska: "NE",
+  Nevada: "NV",
+  "New Hampshire": "NH",
+  "New Jersey": "NJ",
+  "New Mexico": "NM",
+  "New York": "NY",
+  "North Carolina": "NC",
+  "North Dakota": "ND",
+  Ohio: "OH",
+  Oklahoma: "OK",
+  Oregon: "OR",
+  Pennsylvania: "PA",
+  "Rhode Island": "RI",
+  "South Carolina": "SC",
+  "South Dakota": "SD",
+  Tennessee: "TN",
+  Texas: "TX",
+  Utah: "UT",
+  Vermont: "VT",
+  Virginia: "VA",
+  Washington: "WA",
+  "West Virginia": "WV",
+  Wisconsin: "WI",
+  Wyoming: "WY",
+};
+
+const normalizeLocationCandidate = (value: unknown): string => {
+  if (typeof value !== "string") return "";
+  return value
+    .replace(/\b(division|district|province|state|region)\b/gi, "")
+    .replace(/\s+/g, " ")
+    .trim();
+};
+
+const buildTaxLocationCandidates = (place: any): string[] => {
+  const rawCandidates = [
+    place?.city,
+    place?.district,
+    place?.subregion,
+    place?.region,
+  ]
+    .map((value) => normalizeLocationCandidate(value))
+    .filter(Boolean);
+
+  const usaCode = US_STATE_CODES[normalizeLocationCandidate(place?.region)];
+  if (usaCode) {
+    rawCandidates.push(usaCode);
+  }
+
+  return Array.from(new Set(rawCandidates));
+};
+
+const extractTaxRateFromPayload = (payload: any): number => {
+  if (typeof payload === "number" || typeof payload === "string") {
+    return normalizeTaxRate(payload);
+  }
+
+  const source = payload?.data ?? payload;
+
+  return normalizeTaxRate(
+    source?.stateTaxRate ??
+      source?.taxRate ??
+      source?.rate ??
+      source?.percentage ??
+      source?.tax ??
+      source?.TaxRules ??
+      source?.tax_rate ??
+      source?.state_tax_rate ??
+      source?.combinedRate ??
+      source?.combined_rate ??
+      source?.totalTaxRate ??
+      source?.total_tax_rate,
+  );
+};
 
 function CheckoutContent() {
   const router = useRouter();
-  const { fetchCart, createOrder, clearCart, createPaymentIntent } = useStore() as any;
+  const { fetchCart, createOrder, clearCart, createPaymentIntent, fetchStateTax } =
+    useStore() as any;
+  const { location, fetchLocation } = useRestaurantStore();
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedCard, setSelectedCard] = useState("Cash On Delivery");
-  const [cartTotal, setCartTotal] = useState(0);
+  const [selectedCard, setSelectedCard] = useState("Mastercard - Daniel Jones");
   const [cartSubtotal, setCartSubtotal] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [cartRawData, setCartRawData] = useState<any>(null);
+  const [resolvedStateName, setResolvedStateName] = useState("");
+  const [stateTaxRate, setStateTaxRate] = useState(0);
 
   // Payment methods
-  const CARDS = ["Cash On Delivery", "Mastercard - Daniel Jones", "Visa - Daniel Jones"];
+  const CARDS = ["Mastercard - Daniel Jones", "Visa - Daniel Jones"];
 
   const loadCartData = useCallback(async () => {
     const cartData = await fetchCart();
-    const root = cartData?.items ? cartData : cartData?.data?.items ? cartData.data : null;
+    const root = cartData?.items
+      ? cartData
+      : cartData?.data?.items
+        ? cartData.data
+        : null;
 
     if (root) {
       setCartRawData(root);
-      setCartSubtotal(root.subtotal || 0);
-      setCartTotal((root.subtotal || 0) + 3.99); // Delivery fee
+      setCartSubtotal(toNumber(root.subtotal, 0));
     }
   }, [fetchCart]);
 
@@ -42,6 +187,69 @@ function CheckoutContent() {
       loadCartData();
     }, [loadCartData]),
   );
+
+  useEffect(() => {
+    if (!location) {
+      fetchLocation().catch(() => {
+        setResolvedStateName("");
+        setStateTaxRate(0);
+      });
+    }
+  }, [fetchLocation, location]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const resolveStateTax = async () => {
+      try {
+        if (!location) return;
+
+        const places = await Location.reverseGeocodeAsync({
+          latitude: location.latitude,
+          longitude: location.longitude,
+        });
+
+        const candidates = buildTaxLocationCandidates(places?.[0]);
+        const fallbackStateName = extractStateName(
+          normalizeLocationCandidate(places?.[0]?.city),
+          normalizeLocationCandidate(places?.[0]?.district),
+          normalizeLocationCandidate(places?.[0]?.subregion),
+          normalizeLocationCandidate(places?.[0]?.region),
+        );
+
+        for (const candidate of candidates) {
+          const taxInfo = await fetchStateTax(candidate);
+          const taxRate = extractTaxRateFromPayload(taxInfo);
+
+          if (taxInfo && taxRate > 0) {
+            if (isMounted) {
+              setResolvedStateName(
+                extractStateName(taxInfo?.name, taxInfo?.state, fallbackStateName),
+              );
+              setStateTaxRate(taxRate);
+            }
+            return;
+          }
+        }
+
+        if (isMounted) {
+          setResolvedStateName(fallbackStateName);
+          setStateTaxRate(0);
+        }
+      } catch {
+        if (isMounted) {
+          setResolvedStateName("");
+          setStateTaxRate(0);
+        }
+      }
+    };
+
+    resolveStateTax();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [fetchStateTax, location]);
 
   const resolveProviderId = (item: any) => {
     const foodData =
@@ -61,6 +269,22 @@ function CheckoutContent() {
     if (typeof provider === "string") return provider;
     return provider?._id || provider?.id || null;
   };
+
+  const platformFee = toNumber(
+    cartRawData?.platformFee ?? cartRawData?.serviceFee,
+    0,
+  );
+  const countyTaxRate = normalizeTaxRate(
+    cartRawData?.countyTaxRate ?? cartRawData?.cityTaxRate,
+  );
+  const countyTaxAmount = toNumber(
+    cartRawData?.countyTaxAmount,
+    cartSubtotal * countyTaxRate,
+  );
+  const effectiveStateTaxRate = stateTaxRate;
+  const stateTaxAmount = cartSubtotal * effectiveStateTaxRate;
+  const effectiveTotal =
+    cartSubtotal + platformFee + stateTaxAmount + countyTaxAmount;
 
   const handlePlaceOrder = async () => {
     if (!cartRawData || !cartRawData.items || cartRawData.items.length === 0) {
@@ -91,7 +315,8 @@ function CheckoutContent() {
                 : null;
 
           return {
-            foodId: foodData?._id || foodData?.id || item.foodId || item.food?.foodId,
+            foodId:
+              foodData?._id || foodData?.id || item.foodId || item.food?.foodId,
             quantity: item.quantity,
           };
         })
@@ -102,40 +327,49 @@ function CheckoutContent() {
         return;
       }
 
-      const shouldUseStripe = selectedCard !== "Cash On Delivery";
+      const paymentIntentResult = await createPaymentIntent({
+        providerId,
+        items: itemsForPaymentIntent,
+      });
+      const clientSecret = paymentIntentResult?.data?.clientSecret;
 
-      if (shouldUseStripe) {
-        const paymentIntentResult = await createPaymentIntent({
-          providerId,
-          items: itemsForPaymentIntent,
-        });
-        const clientSecret = paymentIntentResult?.data?.clientSecret;
+      if (
+        !paymentIntentResult ||
+        paymentIntentResult?.success === false ||
+        !clientSecret
+      ) {
+        Alert.alert(
+          "Error",
+          paymentIntentResult?.message || "Failed to create payment intent",
+        );
+        return;
+      }
 
-        if (!paymentIntentResult || paymentIntentResult?.success === false || !clientSecret) {
-          Alert.alert("Error", paymentIntentResult?.message || "Failed to create payment intent");
-          return;
-        }
+      const initResult = await initPaymentSheet({
+        merchantDisplayName: "Dine Five",
+        paymentIntentClientSecret: clientSecret,
+        allowsDelayedPaymentMethods: true,
+      });
 
-        const initResult = await initPaymentSheet({
-          merchantDisplayName: "Dine Five",
-          paymentIntentClientSecret: clientSecret,
-          allowsDelayedPaymentMethods: true,
-        });
+      if (initResult.error) {
+        Alert.alert(
+          "Payment Error",
+          initResult.error.message || "Unable to initialize payment sheet",
+        );
+        return;
+      }
 
-        if (initResult.error) {
-          Alert.alert("Payment Error", initResult.error.message || "Unable to initialize payment sheet");
-          return;
-        }
-
-        const paymentResult = await presentPaymentSheet();
-        if (paymentResult.error) {
-          const isCancelled = paymentResult.error.code === "Canceled";
-          Alert.alert(
-            isCancelled ? "Payment Cancelled" : "Payment Failed",
-            paymentResult.error.message || (isCancelled ? "Payment was cancelled." : "Unable to complete payment."),
-          );
-          return;
-        }
+      const paymentResult = await presentPaymentSheet();
+      if (paymentResult.error) {
+        const isCancelled = paymentResult.error.code === "Canceled";
+        Alert.alert(
+          isCancelled ? "Payment Cancelled" : "Payment Failed",
+          paymentResult.error.message ||
+          (isCancelled
+            ? "Payment was cancelled."
+            : "Unable to complete payment."),
+        );
+        return;
       }
 
       const formattedItems = cartRawData.items
@@ -148,9 +382,10 @@ function CheckoutContent() {
                 : null;
 
           return {
-            foodId: foodData?._id || foodData?.id || item.foodId || item.food?.foodId,
+            foodId:
+              foodData?._id || foodData?.id || item.foodId || item.food?.foodId,
             quantity: item.quantity,
-            price: item.price
+            price: item.price,
           };
         })
         .filter((item: any) => !!item.foodId);
@@ -158,9 +393,9 @@ function CheckoutContent() {
       const orderData = {
         providerId: providerId,
         items: formattedItems,
-        totalPrice: cartTotal,
+        totalPrice: effectiveTotal,
         paymentMethod: selectedCard,
-        logisticsType: "Delivery"
+        logisticsType: "Delivery",
       };
 
       console.log("Submitting Order Data:", JSON.stringify(orderData, null, 2));
@@ -171,17 +406,21 @@ function CheckoutContent() {
         await clearCart();
         // Get restaurant details from the first item in cart
         const firstItem = cartRawData.items[0];
-        const foodData = firstItem?.foodId && typeof firstItem.foodId === 'object' ? firstItem.foodId : (firstItem?.food || {});
+        const foodData =
+          firstItem?.foodId && typeof firstItem.foodId === "object"
+            ? firstItem.foodId
+            : firstItem?.food || {};
         const deliveryAddr = "123 Main St, Apt 4B, New York, NY"; // This matches what we show in checkout
-        
+
         router.push({
           pathname: "/screens/card/order-success",
-          params: { 
-            restaurantName: foodData.restaurantName || 'Restaurant',
-            restaurantAddress: foodData.restaurantAddress || 'Selected Location',
+          params: {
+            restaurantName: foodData.restaurantName || "Restaurant",
+            restaurantAddress:
+              foodData.restaurantAddress || "Selected Location",
             deliveryAddress: deliveryAddr,
-            amount: cartTotal.toFixed(2)
-          }
+            amount: effectiveTotal.toFixed(2),
+          },
         });
       } else {
         Alert.alert("Error", result?.message || "Failed to place order");
@@ -220,7 +459,9 @@ function CheckoutContent() {
               style={{ marginTop: 2, marginRight: 12 }}
             />
             <View className="flex-1">
-              <Text className="text-gray-500 text-sm mb-1">Delivery Address</Text>
+              <Text className="text-gray-500 text-sm mb-1">
+                Delivery Address
+              </Text>
               <Text className="text-gray-900 font-bold text-base">
                 123 Main St, Apt 4B, New York, NY
               </Text>
@@ -242,7 +483,9 @@ function CheckoutContent() {
                 style={{ marginTop: 2, marginRight: 12 }}
               />
               <View>
-                <Text className="text-gray-500 text-sm mb-1">Payment Method</Text>
+                <Text className="text-gray-500 text-sm mb-1">
+                  Payment Method
+                </Text>
                 <Text className="text-gray-900 font-bold text-base">
                   {selectedCard}
                 </Text>
@@ -256,31 +499,53 @@ function CheckoutContent() {
         <View className="mt-4 pt-6 border-t border-gray-100">
           <View className="flex-row justify-between mb-4">
             <Text className="text-gray-500 text-base">Subtotal</Text>
-            <Text className="text-gray-900 font-bold text-base">${cartSubtotal.toFixed(2)}</Text>
+            <Text className="text-gray-900 font-bold text-base">
+              {formatMoney(cartSubtotal)}
+            </Text>
           </View>
           <View className="flex-row justify-between mb-4">
-            <Text className="text-gray-500 text-base">Delivery Fee</Text>
-            <Text className="text-gray-900 font-bold text-base">$3.99</Text>
+            <Text className="text-gray-500 text-base">Platform Fee</Text>
+            <Text className="text-gray-900 font-bold text-base">
+              {formatMoney(platformFee)}
+            </Text>
           </View>
+          <View className="flex-row justify-between mb-4">
+            <Text className="text-gray-500 text-base">
+              {resolvedStateName ? `${resolvedStateName} Tax` : "State Tax"}
+            </Text>
+            <Text className="text-gray-900 font-bold text-base">
+              {formatTaxRate(effectiveStateTaxRate)}
+            </Text>
+          </View>
+          <View className="flex-row justify-between mb-4">
+            <Text className="text-gray-500 text-base">County Tax</Text>
+            <Text className="text-gray-900 font-bold text-base">
+              {formatTaxRate(countyTaxRate)}
+            </Text>
+          </View>
+
           <View className="flex-row justify-between text-lg pt-4 border-t border-gray-100">
             <Text className="text-gray-900 text-lg font-bold">Total</Text>
-            <Text className="text-gray-900 text-xl font-bold">${cartTotal.toFixed(2)}</Text>
+            <Text className="text-gray-900 text-xl font-bold">
+              {formatMoney(effectiveTotal)}
+            </Text>
           </View>
         </View>
       </ScrollView>
 
       {/* Footer */}
-      <View className="absolute bottom-16 left-0 right-0 bg-[#FDFBF7] px-4 py-6 border-t border-gray-100 flex-row items-center justify-between">
-        <Text className="text-2xl font-bold text-gray-900">${cartTotal.toFixed(2)}</Text>
+      <View className="absolute bottom-16 left-0 right-0 bg-[#FDFBF7] px-4 py-6 border-t border-gray-100">
         <TouchableOpacity
           onPress={handlePlaceOrder}
           disabled={isLoading}
-          className={`bg-yellow-400 px-10 py-4 rounded-2xl shadow-md ${isLoading ? 'opacity-70' : ''}`}
+          className={`bg-yellow-400 w-full py-4 rounded-2xl shadow-md items-center justify-center ${isLoading ? "opacity-70" : ""}`}
         >
           {isLoading ? (
             <ActivityIndicator color="#000" />
           ) : (
-            <Text className="text-gray-900 font-bold text-lg">Place Order</Text>
+            <Text className="text-gray-900 font-bold text-lg">
+              Place Order {formatMoney(effectiveTotal)}
+            </Text>
           )}
         </TouchableOpacity>
       </View>
@@ -367,7 +632,9 @@ export default function CheckoutScreen() {
       <SafeAreaView className="flex-1 bg-[#FDFBF7] items-center justify-center">
         <StatusBar style="dark" />
         <ActivityIndicator size="large" color="#000" />
-        <Text className="text-gray-600 mt-4">Loading payment configuration...</Text>
+        <Text className="text-gray-600 mt-4">
+          Loading payment configuration...
+        </Text>
       </SafeAreaView>
     );
   }
@@ -376,7 +643,9 @@ export default function CheckoutScreen() {
     return (
       <SafeAreaView className="flex-1 bg-[#FDFBF7] items-center justify-center px-6">
         <StatusBar style="dark" />
-        <Text className="text-xl font-bold text-gray-900 mb-2 text-center">Payment Unavailable</Text>
+        <Text className="text-xl font-bold text-gray-900 mb-2 text-center">
+          Payment Unavailable
+        </Text>
         <Text className="text-gray-600 text-center">
           Could not initialize Stripe. Please try again in a moment.
         </Text>
