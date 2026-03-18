@@ -102,12 +102,12 @@ const normalizeMenuSections = (payload: any): MenuSectionType[] => {
     seenIds.add(id);
 
     const priceValue = toNumber(
-      food?.finalPriceTag ??
+      food?.baseRevenue ??
+        entry?.baseRevenue ??
+        food?.finalPriceTag ??
         food?.price ??
         entry?.finalPriceTag ??
-        entry?.price ??
-        food?.baseRevenue ??
-        entry?.baseRevenue,
+        entry?.price,
       NaN,
     );
     const etaValue = toNumber(
@@ -495,7 +495,7 @@ export default function RestaurantDetailScreen() {
             >
               <Ionicons name="star" size={13} color="#F5C518" />
               <Text className="text-xs font-semibold text-gray-700">
-                {restaurantRating} • ratings
+                {restaurantRating} ï¿½ ratings
               </Text>
             </View>
             <View
@@ -504,7 +504,7 @@ export default function RestaurantDetailScreen() {
             >
               <Ionicons name="bicycle-outline" size={13} color="#6B7280" />
               <Text className="text-xs font-semibold text-gray-700">
-                Pickup • {restaurantDistance}
+                Pickup ï¿½ {restaurantDistance}
               </Text>
             </View>
           </View>

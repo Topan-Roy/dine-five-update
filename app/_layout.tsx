@@ -1,10 +1,16 @@
 import { Stack, useRouter, useSegments } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
+import React, { useEffect } from "react";
+import { View } from "react-native";
+import { Image } from "expo-image";
 import "../global.css";
 
 import { useNotificationSync } from "@/hooks/useNotificationSync";
 import { useStore } from "@/stores/stores";
-import { useEffect } from "react";
+
+// Keep the splash screen visible while we fetch resources
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function RootLayout() {
   const { isInitialized, initializeAuth, accessToken } = useStore() as any;
@@ -16,25 +22,28 @@ export default function RootLayout() {
   }, []);
 
   useEffect(() => {
-    const group = segments[0];
+    if (isInitialized) {
+      SplashScreen.hideAsync().catch(() => {});
+    }
+  }, [isInitialized]);
+
+  useEffect(() => {
+    const group = segments[0] as string;
 
     const inAuthGroup = group === "(auth)";
     const inStepGroup = group === "(step)";
     const inTabsGroup = group === "(tabs)";
     const inScreensGroup = group === "screens";
+    const inSplashScreen = group === "splash-screen";
 
-    if (!isInitialized) return;
+    if (!isInitialized || inSplashScreen) return;
 
     if (!accessToken) {
-      // User is NOT signed in
-      // Redirect to login ONLY if trying to access protected groups (tabs, screens)
       if (inTabsGroup || inScreensGroup) {
         router.replace("/(auth)/login");
       }
     } else {
-      // User IS signed in
       if (inAuthGroup || inStepGroup) {
-        // Authenticated users shouldn't see auth pages or onboarding steps
         router.replace("/(tabs)");
       }
     }
@@ -42,13 +51,25 @@ export default function RootLayout() {
 
   useNotificationSync();
 
-  if (!isInitialized) return null;
+  if (!isInitialized) {
+    return (
+      <View style={{ flex: 1, backgroundColor: "#FFFFFF", alignItems: "center", justifyContent: "center" }}>
+        <StatusBar style="dark" />
+        <Image
+          source={require("@/assets/images/icon.png")}
+          contentFit="contain"
+          style={{ width: 320, height: 320 }}
+        />
+      </View>
+    );
+  }
 
   return (
     <>
       <StatusBar style="auto" />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="splash-screen" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="(step)" options={{ headerShown: false }} />

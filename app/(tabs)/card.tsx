@@ -165,17 +165,17 @@ const extractTaxRateFromPayload = (
 
   return normalizeTaxRate(
     taxSource?.stateTaxRate ??
-      taxSource?.taxRate ??
-      taxSource?.rate ??
-      taxSource?.percentage ??
-      taxSource?.tax ??
-      taxSource?.TaxRules ??
-      taxSource?.tax_rate ??
-      taxSource?.state_tax_rate ??
-      taxSource?.combinedRate ??
-      taxSource?.combined_rate ??
-      taxSource?.totalTaxRate ??
-      taxSource?.total_tax_rate,
+    taxSource?.taxRate ??
+    taxSource?.rate ??
+    taxSource?.percentage ??
+    taxSource?.tax ??
+    taxSource?.TaxRules ??
+    taxSource?.tax_rate ??
+    taxSource?.state_tax_rate ??
+    taxSource?.combinedRate ??
+    taxSource?.combined_rate ??
+    taxSource?.totalTaxRate ??
+    taxSource?.total_tax_rate,
   );
 };
 
@@ -243,7 +243,11 @@ export default function CardScreen() {
               "Unknown item",
             ),
             price: toNumber(
-              item.price ?? foodData?.price ?? foodData?.finalPriceTag,
+              item.baseRevenue ??
+                foodData?.baseRevenue ??
+                item.price ??
+                foodData?.price ??
+                foodData?.finalPriceTag,
               0,
             ),
             image: pickString(foodData?.image, item.image),
@@ -276,10 +280,15 @@ export default function CardScreen() {
             ),
             distanceKm: toNumber(item.distanceKm ?? foodData?.distanceKm, NaN),
             etaMinutes: toNumber(item.etaMinutes ?? foodData?.etaMinutes, NaN),
+            serviceFee: toNumber(item.serviceFee ?? foodData?.serviceFee, 0),
           };
         });
         setCartItems(formattedItems);
-        setSubtotal(toNumber(root.subtotal, 0));
+        const computedSubtotal = formattedItems.reduce(
+          (acc: number, item: any) => acc + item.price * item.quantity,
+          0,
+        );
+        setSubtotal(computedSubtotal);
       } else {
         setCartItems([]);
         setSubtotal(0);
@@ -455,21 +464,14 @@ export default function CardScreen() {
     ? `${Math.max(1, Math.round(firstItem.etaMinutes - 2))}-${Math.round(firstItem.etaMinutes + 2)} min`
     : pickString(cartMeta?.eta, "20-22 min");
 
-  const platformFee = toNumber(
-    cartMeta?.platformFee ?? cartMeta?.serviceFee ?? 0,
-    0,
-  );
+  const platformFee = cartItems.reduce((acc, item) => {
+    return acc + (item.serviceFee || 0) * (item.quantity || 1);
+  }, 0);
   const stateTaxRate = normalizeTaxRate(locationTaxRate);
   const countyTaxRate = normalizeTaxRate(cartMeta?.countyTaxRate);
   const stateTaxAmount = subtotal * stateTaxRate;
-  const countyTaxAmount = toNumber(
-    cartMeta?.countyTaxAmount,
-    subtotal * countyTaxRate,
-  );
-  const total = toNumber(
-    cartMeta?.total ?? cartMeta?.grandTotal,
-    subtotal + platformFee + stateTaxAmount + countyTaxAmount,
-  );
+  const countyTaxAmount = subtotal * countyTaxRate;
+  const total = subtotal + platformFee + stateTaxAmount + countyTaxAmount;
 
   return (
     <SafeAreaView className="flex-1 bg-[#F7F6F2]">
@@ -561,7 +563,7 @@ export default function CardScreen() {
                 <Text className="w-16 text-right text-[14px] font-medium text-gray-900">
                   {formatMoney(
                     toNumber(item.price, 0) *
-                      Math.max(1, toNumber(item.quantity, 1)),
+                    Math.max(1, toNumber(item.quantity, 1)),
                   )}
                 </Text>
               </View>
@@ -588,12 +590,16 @@ export default function CardScreen() {
                 {formatMoney(subtotal)}
               </Text>
             </View>
-            {/* <View className="flex-row justify-between py-1">
+
+
+
+
+            <View className="flex-row justify-between py-1">
               <Text className="text-[14px] text-gray-600">Platform fee</Text>
               <Text className="text-[14px] text-gray-700">
                 {formatMoney(platformFee)}
               </Text>
-            </View> */}
+            </View>
             <View className="flex-row justify-between py-1">
               <Text className="text-[14px] text-gray-600">
                 {resolvedStateName ? `State tax` : "State tax"}

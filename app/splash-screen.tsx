@@ -2,25 +2,26 @@ import { useStore } from "@/stores/stores";
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import React, { useEffect } from "react";
-import { ImageBackground, View } from "react-native";
+import { View } from "react-native";
 
 const SplashScreen = () => {
-  const { user, accessToken, initializeAuth } = useStore() as any;
+  const { initializeAuth } = useStore() as any;
 
   useEffect(() => {
     let timer: any;
 
     const init = async () => {
-      // Ensure auth is initialized from storage
+      // Initialize auth state (fetch from storage)
       const auth = await initializeAuth();
 
+      // Artificial delay to show the "DineFive" logo
       timer = setTimeout(() => {
         if (auth && auth.user && auth.accessToken) {
           router.replace("/(tabs)");
         } else {
           router.replace("/(step)/step1");
         }
-      }, 2000);
+      }, 2000); // Back to 2s as requested by user in their manual edit
     };
 
     init();
@@ -28,28 +29,19 @@ const SplashScreen = () => {
     return () => {
       if (timer) clearTimeout(timer);
     };
-  }, []); // Only run on mount
-
+  }, []);
 
   return (
-    <ImageBackground
-      source={require("@/assets/images/splash-screen.png")}
-      resizeMode="cover"
-      style={{ flex: 1, width: "100%", height: "100%" }}
-    >
-      <View className="flex-1 items-center justify-center">
-        <Image
-          source={require("@/assets/images/icon.png")}
-          contentFit="contain"
-          style={{
-            height: 320,
-            width: 320,
-            borderRadius: 160,
-            backgroundColor: "#00000010",
-          }}
-        />
-      </View>
-    </ImageBackground>
+    <View style={{ flex: 1, backgroundColor: "#FFFFFF", alignItems: "center", justifyContent: "center" }}>
+      <Image
+        source={require("@/assets/images/icon.png")}
+        contentFit="contain"
+        style={{
+          height: 320,
+          width: 320,
+        }}
+      />
+    </View>
   );
 };
 

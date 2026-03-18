@@ -174,7 +174,26 @@ function CheckoutContent() {
 
     if (root) {
       setCartRawData(root);
-      setCartSubtotal(toNumber(root.subtotal, 0));
+      const items = Array.isArray(root.items) ? root.items : [];
+      const computedSubtotal = items.reduce((acc: number, item: any) => {
+        const foodData =
+          item?.foodId && typeof item.foodId === "object"
+            ? item.foodId
+            : item?.food && typeof item.food === "object"
+              ? item.food
+              : null;
+        const price = toNumber(
+          item.baseRevenue ??
+            foodData?.baseRevenue ??
+            item.price ??
+            foodData?.price ??
+            foodData?.finalPriceTag,
+          0,
+        );
+        const quantity = Math.max(1, Math.floor(toNumber(item.quantity, 1)));
+        return acc + price * quantity;
+      }, 0);
+      setCartSubtotal(computedSubtotal);
     }
   }, [fetchCart]);
 
@@ -270,17 +289,22 @@ function CheckoutContent() {
     return provider?._id || provider?.id || null;
   };
 
-  const platformFee = toNumber(
-    cartRawData?.platformFee ?? cartRawData?.serviceFee,
-    0,
-  );
+  const cartItems = Array.isArray(cartRawData?.items) ? cartRawData.items : [];
+  const platformFee = cartItems.reduce((acc: number, item: any) => {
+    const foodData =
+      item?.foodId && typeof item.foodId === "object"
+        ? item.foodId
+        : item?.food && typeof item.food === "object"
+          ? item.food
+          : null;
+    const serviceFee = toNumber(item.serviceFee ?? foodData?.serviceFee, 0);
+    const quantity = Math.max(1, Math.floor(toNumber(item.quantity, 1)));
+    return acc + serviceFee * quantity;
+  }, 0);
   const countyTaxRate = normalizeTaxRate(
     cartRawData?.countyTaxRate ?? cartRawData?.cityTaxRate,
   );
-  const countyTaxAmount = toNumber(
-    cartRawData?.countyTaxAmount,
-    cartSubtotal * countyTaxRate,
-  );
+  const countyTaxAmount = cartSubtotal * countyTaxRate;
   const effectiveStateTaxRate = stateTaxRate;
   const stateTaxAmount = cartSubtotal * effectiveStateTaxRate;
   const effectiveTotal =

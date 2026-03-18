@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -26,6 +27,8 @@ export default function CustomerSupportScreen() {
   const {
     fetchMessages,
     fetchConversations,
+    createConversation,
+    createSupportTicket,
     sendMessage,
     sendMessageToProvider,
     user,
@@ -36,7 +39,7 @@ export default function CustomerSupportScreen() {
     (params.conversationId as string) || null,
   );
   const [providerId] = useState<string | null>(
-    (params.providerId as string) || "69714abce548ab10b90c0e50",
+    (params.providerId as string) || "69814b5b4d784da531fb6517",
   );
 
   const [message, setMessage] = useState("");
@@ -44,46 +47,89 @@ export default function CustomerSupportScreen() {
     { uri: string; type: "image" | "video" }[]
   >([]);
   const [messages, setMessages] = useState<any[]>([]);
+  const [prevMessageCount, setPrevMessageCount] = useState(0);
+
+  // Auto-scroll when new messages arrive
+  useEffect(() => {
+    if (messages.length > prevMessageCount) {
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+      setPrevMessageCount(messages.length);
+    }
+  }, [messages.length]);
 
   useEffect(() => {
     loadData();
 
-    // Set up polling for new messages every 5 seconds
+    // Set up polling for new messages every 3 seconds for better real-time feel
     const interval = setInterval(() => {
       if (conversationId) {
         refreshMessages();
       }
-    }, 5000);
+    }, 3000);
 
     return () => clearInterval(interval);
-  }, [conversationId]);
+  }, [conversationId, user]);
 
   const loadData = async () => {
-    if (conversationId) {
-      await refreshMessages();
-    } else {
-      // Try to find if there's an existing conversation
-      const result = await fetchConversations();
-      const convs = result?.conversations || (Array.isArray(result) ? result : []);
+    try {
+      if (conversationId) {
+        await refreshMessages();
+      } else if (providerId) {
+        // Try to find if there's an existing conversation or create a new one
+        console.log("Creating/Fetching conversation for providerId:", providerId);
+        const data = await createConversation(providerId);
+        console.log("createConversation data:", JSON.stringify(data, null, 2));
 
-      if (convs.length > 0) {
-        // Find existing conversation with this provider or take the first one
-        const targetConv = providerId
-          ? convs.find(
-            (c: any) =>
-              c.providerId === providerId ||
-              c.provider?.id === providerId ||
-              c.provider?._id === providerId ||
-              c.adminId === providerId,
-          )
-          : convs[0];
+        if (data) {
+          const id = data.id || data._id;
+          console.log("Extracted conversationId:", id);
+          if (id) {
+            setConversationId(id);
+          }
+        }
 
-        if (targetConv) {
+        // Create support ticket when entering
+        if (user) {
+          console.log("Creating support ticket for user:", user?.id || user?._id);
+          createSupportTicket({
+            userId: user?.id || user?._id,
+            userType: "Customer",
+            subject: "Cannot update menu items",
+            description: "I am trying to change the price of my pizza but it failsgfgtgertertretrert.",
+            priority: "Medium",
+          }).catch((err: any) => console.log("Silent ticket creation error:", err));
+        }
+      } else {
+        // Fallback: try to fetch all conversations
+        const result = await fetchConversations();
+        const convs = result?.conversations || result || [];
+
+        if (convs.length > 0) {
+          const targetConv = convs[0];
           setConversationId(targetConv.id || targetConv._id);
         }
       }
+    } catch (error) {
+      console.log("loadData error:", error);
     }
   };
+
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      "keyboardDidShow",
+      () => {
+        setTimeout(() => {
+          scrollViewRef.current?.scrollToEnd({ animated: true });
+        }, 100);
+      },
+    );
+
+    return () => {
+      keyboardDidShowListener.remove();
+    };
+  }, []);
 
   const refreshMessages = async () => {
     if (!conversationId) return;
@@ -94,10 +140,13 @@ export default function CustomerSupportScreen() {
         const formattedMessages = rawMessages.map((m: any) => ({
           id: m.id || m._id || m.messageId || Math.random().toString(),
           text: m.content || m.text || m.message || "",
-          // If sender role is PROVIDER or ADMIN, it's support (Left side)
-          isSupport: m.sender?.role
-            ? m.sender.role === "PROVIDER" || m.sender.role === "ADMIN"
-            : (m.senderId !== user?.id && m.senderId !== user?._id),
+          // Improved isSupport logic: True if sender is Admin, Super Admin, Provider or not the current user
+          isSupport:
+            m.sender?.role === "ADMIN" ||
+            m.sender?.role === "SUPER_ADMIN" ||
+            m.sender?.role === "PROVIDER" ||
+            m.senderId === providerId ||
+            (!!m.senderId && m.senderId !== user?.id && m.senderId !== user?._id),
           time: new Date(m.createdAt).toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",
@@ -273,7 +322,7 @@ export default function CustomerSupportScreen() {
     try {
       let result;
       // We always use sendMessageToProvider because the user confirmed
-      // /api/v1/chat/message/customer-to-provider is the working endpoint
+      // /api/chat/message/customer-to-provider is the working endpoint in Postman
       if (providerId) {
         result = await sendMessageToProvider(
           providerId,
@@ -314,15 +363,13 @@ export default function CustomerSupportScreen() {
         if (!conversationId) {
           // If first message, we need to refresh to get the new conversationId
           const list = await fetchConversations();
-          const convs = list?.conversations || (Array.isArray(list) ? list : []);
+          const convs = list?.conversations || [];
           if (convs.length > 0) {
             const target = providerId
               ? convs.find(
                 (c: any) =>
                   c.providerId === providerId ||
-                  c.provider?.id === providerId ||
-                  c.provider?._id === providerId ||
-                  c.adminId === providerId,
+                  c.provider?.id === providerId,
               )
               : convs[0];
             if (target) setConversationId(target.id || target._id);
@@ -360,18 +407,16 @@ export default function CustomerSupportScreen() {
 
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "padding"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 25}
         className="flex-1"
       >
         <ScrollView
           ref={scrollViewRef}
           className="flex-1 px-6"
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
           contentContainerStyle={{ paddingVertical: 20 }}
           onContentSizeChange={() =>
-            scrollViewRef.current?.scrollToEnd({ animated: true })
-          }
-          onLayout={() =>
             scrollViewRef.current?.scrollToEnd({ animated: true })
           }
         >

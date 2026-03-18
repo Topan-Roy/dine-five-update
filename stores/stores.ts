@@ -1,6 +1,5 @@
 import { API_BASE_URL } from "@/utils/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as Location from "expo-location";
 import { create } from "zustand";
 
 const STORAGE_KEYS = {
@@ -1085,6 +1084,38 @@ export const useStore = create((set, get) => ({
     }
   },
 
+  createConversation: async (providerId: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      const { accessToken } = get() as any;
+      if (!accessToken) throw new Error("No access token found");
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/v1/chat/conversations`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({ providerId }),
+        },
+      );
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to create conversation");
+      }
+
+      set({ isLoading: false });
+      return result.data;
+    } catch (error: any) {
+      console.log("createConversation error", error);
+      set({ error: error.message, isLoading: false });
+      throw error;
+    }
+  },
+
   fetchMessages: async (conversationId: string, page = 1, limit = 20) => {
     set({ isLoading: true, error: null });
     try {
@@ -1116,11 +1147,7 @@ export const useStore = create((set, get) => ({
     }
   },
 
-  sendMessage: async (
-    conversationId: string,
-    message: string,
-    attachments: any[] = [],
-  ) => {
+  sendMessage: async (conversationId: string, message: string, attachments: any[] = []) => {
     set({ isLoading: true, error: null });
     try {
       const { accessToken } = get() as any;
@@ -1144,10 +1171,7 @@ export const useStore = create((set, get) => ({
         body = JSON.stringify({ message });
       }
 
-      console.log(
-        "Sending POST to:",
-        `${API_BASE_URL}/api/v1/chat/conversations/${conversationId}/messages`,
-      );
+      console.log("Sending POST to:", `${API_BASE_URL}/api/v1/chat/conversations/${conversationId}/messages`);
 
       const response = await fetch(
         `${API_BASE_URL}/api/v1/chat/conversations/${conversationId}/messages`,
@@ -1176,11 +1200,7 @@ export const useStore = create((set, get) => ({
     }
   },
 
-  sendMessageToProvider: async (
-    providerId: string,
-    message: string,
-    attachments: any[] = [],
-  ) => {
+  sendMessageToProvider: async (providerId: string, message: string, attachments: any[] = []) => {
     set({ isLoading: true, error: null });
     try {
       const { accessToken } = get() as any;
@@ -1197,10 +1217,7 @@ export const useStore = create((set, get) => ({
         attachments.forEach((file, index) => {
           const fileName = file.uri.split("/").pop() || `image_${index}.jpg`;
           const extension = fileName.split(".").pop()?.toLowerCase() || "jpg";
-          const fileType =
-            file.type === "video"
-              ? "video/mp4"
-              : `image/${extension === "png" ? "png" : "jpeg"}`;
+          const fileType = file.type === "video" ? "video/mp4" : `image/${extension === 'png' ? 'png' : 'jpeg'}`;
 
           body.append("image", {
             uri: file.uri,
@@ -1213,7 +1230,6 @@ export const useStore = create((set, get) => ({
       }
 
       console.log("--- OUTGOING MESSAGE DETAILS ---");
-      console.log("Receiver ID:", providerId);
       console.log("Text:", message);
       if (isFormData) {
         console.log("Attachments count:", attachments.length);
@@ -1222,7 +1238,7 @@ export const useStore = create((set, get) => ({
       console.log("--------------------------------");
 
       const response = await fetch(
-        `${API_BASE_URL}/api/v1/chat/message/customer-to-provider`,
+        `${API_BASE_URL}/api/v1/chat/message/customer-to-admin`,
         {
           method: "POST",
           headers: {
@@ -1240,9 +1256,7 @@ export const useStore = create((set, get) => ({
       try {
         result = JSON.parse(responseText);
       } catch (e) {
-        throw new Error(
-          `Server returned non-JSON: ${responseText.substring(0, 50)}`,
-        );
+        throw new Error(`Server returned non-JSON: ${responseText.substring(0, 50)}`);
       }
 
       if (result.success && result.data?.imageUrl) {
@@ -1252,11 +1266,7 @@ export const useStore = create((set, get) => ({
       }
 
       if (!response.ok) {
-        throw new Error(
-          result.message ||
-            result.error ||
-            "Failed to send message to provider",
-        );
+        throw new Error(result.message || result.error || "Failed to send message to provider");
       }
 
       set({ isLoading: false });
@@ -1510,9 +1520,9 @@ export const useStore = create((set, get) => ({
       if (!response.ok) {
         throw new Error(
           result?.message ||
-            result?.error?.message ||
-            result?.error ||
-            "Failed to add item to cart",
+          result?.error?.message ||
+          result?.error ||
+          "Failed to add item to cart",
         );
       }
 
@@ -1544,9 +1554,9 @@ export const useStore = create((set, get) => ({
       if (!response.ok) {
         throw new Error(
           result?.message ||
-            result?.error?.message ||
-            result?.error ||
-            "Failed to fetch cart",
+          result?.error?.message ||
+          result?.error ||
+          "Failed to fetch cart",
         );
       }
 
@@ -1603,9 +1613,9 @@ export const useStore = create((set, get) => ({
       if (!response.ok) {
         throw new Error(
           result?.message ||
-            result?.error?.message ||
-            result?.error ||
-            "Failed to update cart",
+          result?.error?.message ||
+          result?.error ||
+          "Failed to update cart",
         );
       }
 
@@ -1637,9 +1647,9 @@ export const useStore = create((set, get) => ({
       if (!response.ok) {
         throw new Error(
           result?.message ||
-            result?.error?.message ||
-            result?.error ||
-            "Failed to remove item",
+          result?.error?.message ||
+          result?.error ||
+          "Failed to remove item",
         );
       }
 
@@ -1796,7 +1806,38 @@ export const useStore = create((set, get) => ({
       return false;
     }
   },
- fetchStateTax: async (stateName: string) => {
+
+  createSupportTicket: async (ticketData: any) => {
+    set({ isLoading: true, error: null });
+    try {
+      const { accessToken } = get() as any;
+      if (!accessToken) throw new Error("No access token found");
+
+      const response = await fetch(`${API_BASE_URL}/api/v1/support/tickets`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify(ticketData),
+      });
+
+      const result = await response.json();
+      console.log("createSupportTicket result:", JSON.stringify(result, null, 2));
+
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to create support ticket");
+      }
+
+      set({ isLoading: false });
+      return result;
+    } catch (error: any) {
+      console.log("createSupportTicket error:", error);
+      set({ error: error.message, isLoading: false });
+      throw error;
+    }
+  },
+  fetchStateTax: async (stateName: string) => {
     if (!stateName) return null;
     console.log("Fetching tax for state:", stateName);
     try {
