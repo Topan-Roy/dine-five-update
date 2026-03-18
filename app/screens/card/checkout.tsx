@@ -133,17 +133,17 @@ const extractTaxRateFromPayload = (payload: any): number => {
 
   return normalizeTaxRate(
     source?.stateTaxRate ??
-      source?.taxRate ??
-      source?.rate ??
-      source?.percentage ??
-      source?.tax ??
-      source?.TaxRules ??
-      source?.tax_rate ??
-      source?.state_tax_rate ??
-      source?.combinedRate ??
-      source?.combined_rate ??
-      source?.totalTaxRate ??
-      source?.total_tax_rate,
+    source?.taxRate ??
+    source?.rate ??
+    source?.percentage ??
+    source?.tax ??
+    source?.TaxRules ??
+    source?.tax_rate ??
+    source?.state_tax_rate ??
+    source?.combinedRate ??
+    source?.combined_rate ??
+    source?.totalTaxRate ??
+    source?.total_tax_rate,
   );
 };
 
@@ -184,10 +184,10 @@ function CheckoutContent() {
               : null;
         const price = toNumber(
           item.baseRevenue ??
-            foodData?.baseRevenue ??
-            item.price ??
-            foodData?.price ??
-            foodData?.finalPriceTag,
+          foodData?.baseRevenue ??
+          item.price ??
+          foodData?.price ??
+          foodData?.finalPriceTag,
           0,
         );
         const quantity = Math.max(1, Math.floor(toNumber(item.quantity, 1)));
@@ -535,7 +535,7 @@ function CheckoutContent() {
           </View>
           <View className="flex-row justify-between mb-4">
             <Text className="text-gray-500 text-base">
-              {resolvedStateName ? `${resolvedStateName} Tax` : "State Tax"}
+              State Tax
             </Text>
             <Text className="text-gray-900 font-bold text-base">
               {formatTaxRate(effectiveStateTaxRate)}
