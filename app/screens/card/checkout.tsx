@@ -484,7 +484,7 @@ function CheckoutContent() {
             />
             <View className="flex-1">
               <Text className="text-gray-500 text-sm mb-1">
-                Delivery Address
+                Pickup from
               </Text>
               <Text className="text-gray-900 font-bold text-base">
                 123 Main St, Apt 4B, New York, NY

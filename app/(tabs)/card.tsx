@@ -244,10 +244,10 @@ export default function CardScreen() {
             ),
             price: toNumber(
               item.baseRevenue ??
-                foodData?.baseRevenue ??
-                item.price ??
-                foodData?.price ??
-                foodData?.finalPriceTag,
+              foodData?.baseRevenue ??
+              item.price ??
+              foodData?.price ??
+              foodData?.finalPriceTag,
               0,
             ),
             image: pickString(foodData?.image, item.image),
@@ -638,7 +638,7 @@ export default function CardScreen() {
           <Text className="text-[13px] text-amber-500 ml-1">Empty bag</Text>
         </TouchableOpacity>
 
-        <View className="flex-row gap-2">
+        <View className="flex-row gap-2 mb-5">
           <TouchableOpacity
             onPress={() => router.push("/(tabs)")}
             className="flex-1 h-11 rounded-xl border border-[#E5E7EB] bg-white items-center justify-center flex-row"

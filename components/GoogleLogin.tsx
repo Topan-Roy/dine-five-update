@@ -69,7 +69,7 @@ export default function GoogleLogin() {
             {isBusy ? (
               <ActivityIndicator color="#1F1F1F" />
             ) : (
-              <Ionicons name="logo-google" size={20} color="#DB4437" />
+              <Ionicons name="logo-google" size={24} color="#DB4437" />
             )}
             <Text style={styles.providerButtonText}>
               {isBusy ? "Processing..." : "Continue with Google"}
@@ -96,16 +96,17 @@ const styles = StyleSheet.create({
     position: 'relative',
     overflow: 'hidden',
     borderRadius: 24,
-    padding: 2, // for border effect
+    padding: 10, // for border effect
   },
   buttonStack: {
     width: '100%',
   },
   providerButton: {
     borderRadius: 16,
-    minHeight: 56,
+    minHeight: 64,
     justifyContent: "center",
-    paddingHorizontal: 20,
+    paddingHorizontal: 46,
+    paddingVertical: 18,
     backgroundColor: "#FFFFFF",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -121,7 +122,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    columnGap: 12,
+    columnGap: 36,
   },
   providerButtonText: {
     fontSize: 16,
