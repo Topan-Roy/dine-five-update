@@ -1,50 +1,152 @@
-# Welcome to your Expo app 👋
+# Dine-Five
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Dine-Five is a mobile-first food ordering app built with Expo, React Native, and Expo Router. It brings together customer onboarding, authentication, nearby restaurant discovery, menu browsing, cart management, checkout, payment, notifications, and profile management in one app experience.
 
-## Get started
+![Dine-Five preview](./assets/images/Screenshot.png)
 
-1. Install dependencies
+## Overview
 
-   ```bash
-   npm install
-   ```
+This project is focused on the customer side of a food ordering flow. Users can sign up, verify their account, discover nearby restaurants using location data, explore restaurant and product details, manage a cart, complete checkout with Stripe, and review past orders from the profile area.
 
-2. Start the app
+## Key Features
 
-   ```bash
-   npx expo start
-   ```
+- Multi-step onboarding and splash experience
+- Email/password authentication
+- OTP email verification and forgot/reset password flow
+- Google Sign-In for native builds
+- Location-aware restaurant discovery
+- Search, category filters, banners, and nearby restaurant sections
+- Restaurant details, product details, favorites, and reviews
+- Cart management with quantity updates and tax-aware checkout
+- Stripe Payment Sheet integration
+- Order creation, order history, and order success flow
+- Profile management, support, and settings screens
+- Local notification sync for in-app updates
 
-In the output, you'll find options to open the app in a
+## Tech Stack
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+- Expo 54
+- React Native 0.81
+- React 19
+- Expo Router for file-based navigation
+- TypeScript
+- NativeWind and Tailwind CSS for styling
+- Zustand with AsyncStorage for app state and persisted auth
+- Expo Location, Notifications, Splash Screen, AV, Image Picker, and Web Browser
+- Stripe React Native SDK
+- Google Sign-In
+- React Native Maps with web fallback support
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## Project Structure
 
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```text
+app/                Route groups, screens, and navigation structure
+components/         Reusable UI for auth, home, map, cart, and product flows
+stores/             Zustand stores for auth, restaurants, cart, orders, and more
+services/           Native and third-party integration helpers
+hooks/              App-level hooks such as notification syncing
+utils/              API utilities, storage helpers, and shared helpers
+assets/             Icons, splash assets, screenshots, and images
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Getting Started
 
-## Learn more
+### Prerequisites
 
-To learn more about developing your project with Expo, look at the following resources:
+- Node.js 18 or newer
+- npm
+- Android Studio and/or Xcode for native testing
+- A working backend API that matches the endpoints used in `stores/stores.ts`
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### 1. Install dependencies
 
-## Join the community
+```bash
+npm install
+```
 
-Join our community of developers creating universal apps.
+### 2. Configure the backend URL
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Create a `.env` file in the project root and add:
+
+```env
+EXPO_PUBLIC_API_URL=http://192.168.0.10:5000
+```
+
+Notes:
+
+- If `EXPO_PUBLIC_API_URL` is not set, the app falls back to `http://localhost:5000`.
+- The logic in `utils/api.ts` automatically adjusts localhost-style URLs for Android emulators and Expo LAN sessions when possible.
+- On a physical device, use your machine's local network IP instead of `localhost`.
+
+### 3. Start the project
+
+```bash
+npm run start
+```
+
+You can also run platform-specific commands:
+
+```bash
+npm run android
+npm run ios
+npm run web
+```
+
+## Native Build Notes
+
+Some features rely on native modules and work best in a development build instead of a basic Expo Go session:
+
+- Google Sign-In
+- Stripe payments
+- Maps and location permissions
+- Notification permissions and delivery
+
+For those flows, prefer:
+
+```bash
+npm run android
+```
+
+or
+
+```bash
+npm run ios
+```
+
+## Available Scripts
+
+- `npm run start` - Start the Expo development server
+- `npm run android` - Run the Android app
+- `npm run ios` - Run the iOS app
+- `npm run web` - Run the web build
+- `npm run lint` - Run lint checks
+
+## Backend Capabilities Expected
+
+This frontend expects backend support for the following areas:
+
+- Authentication and email verification
+- User profile management
+- Restaurant discovery and menu data
+- Cart operations
+- Orders and order history
+- Reviews and favorites
+- Notifications
+- Stripe configuration and payment intents
+- Support tickets
+
+## Configuration Notes
+
+- `app.json` includes native configuration for location, notifications, Stripe, and Google services.
+- The current implementation includes Google Sign-In and Google Maps related native setup.
+- Before a production release, move any sensitive keys and client IDs to secure environment-based configuration.
+
+## Platform Notes
+
+- The main target is mobile, even though web support is available for layout and flow testing.
+- Google Sign-In is currently not available on web in this implementation.
+- Some checkout data and payment method labels are still demo-style placeholders and should be finalized before production rollout.
+
+## License
+
+This project is private and is not currently licensed for public redistribution.
