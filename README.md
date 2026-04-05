@@ -1,12 +1,16 @@
+## Project Info
+
+- Developer: Topon Roy from Bangladesh
+- Version: 1.0.0
+- Platform: iOS & Android
 # Dine-Five
 
 Dine-Five is a mobile-first food ordering app built with Expo, React Native, and Expo Router. It brings together customer onboarding, authentication, nearby restaurant discovery, menu browsing, cart management, checkout, payment, notifications, and profile management in one app experience.
 
 ![Dine-Five preview](./assets/icon.png)
-
 ## Overview
 
-This project is focused on the customer side of a food ordering flow. Users can sign up, verify their account, discover nearby restaurants using location data, explore restaurant and product details, manage a cart, complete checkout with Stripe, and review past orders from the profile area.
+This project focuses on the customer side of a complete food ordering flow. Users can sign up, verify their account, discover nearby restaurants using location data, explore restaurant and product details, manage a cart, complete checkout with Stripe, and review past orders from the profile section.
 
 ## Key Features
 
@@ -120,6 +124,7 @@ npm run ios
 - `npm run ios` - Run the iOS app
 - `npm run web` - Run the web build
 - `npm run lint` - Run lint checks
+- `npm run reset-project` - Reset the starter project files
 
 ## Backend Capabilities Expected
 
