@@ -75,7 +75,7 @@ export default function OrderSuccessScreen() {
                     <View className="flex-row justify-between items-start mt-4">
                         <View className="flex-row items-center">
                             <Ionicons name="location-outline" size={20} color="#666" style={{ marginRight: 8 }} />
-                            <Text className="text-gray-500 text-base">Pickup from</Text>
+                            <Text className="text-gray-500 text-base"> Delivery from</Text>
                         </View>
                         <View className="items-end flex-1 ml-4">
                             {/* <Text className="text-gray-900 font-bold text-base text-right">Home</Text> */}

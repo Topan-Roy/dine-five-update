@@ -484,7 +484,7 @@ function CheckoutContent() {
             />
             <View className="flex-1">
               <Text className="text-gray-500 text-sm mb-1">
-                Pickup from
+                {/* Pickup from */} Delivery from
               </Text>
               <Text className="text-gray-900 font-bold text-base">
                 123 Main St, Apt 4B, New York, NY
@@ -522,7 +522,7 @@ function CheckoutContent() {
         {/* Summary */}
         <View className="mt-4 pt-6 border-t border-gray-100">
           <View className="flex-row justify-between mb-4">
-            <Text className="text-gray-500 text-base">Subtotal</Text>
+            <Text className="text-gray-500 text-base">Item subtotal</Text>
             <Text className="text-gray-900 font-bold text-base">
               {formatMoney(cartSubtotal)}
             </Text>

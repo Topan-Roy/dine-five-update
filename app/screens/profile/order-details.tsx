@@ -31,7 +31,7 @@ export default function OrderDetailsScreen() {
 
   useEffect(() => {
     const checkExistingReview = async () => {
-      const orderId = (params._id as string) || (params.orderId as string);
+      const orderId = (params.orderId as string) || (params._id as string);
       if (
         orderId &&
         ["picked_up", "delivered", "completed"].includes(currentState)
@@ -63,20 +63,17 @@ export default function OrderDetailsScreen() {
   }, [params.autoRate, currentState, params._id, params.orderId]);
 
 
-  //  change 
-
-  //  const isCancelable =
-  //     ["pending", "preparing", "ready", "ready_for_pickup"].includes(
-  //       currentState.toLowerCase(),
-  //     ) &&
-  //     !["completed", "delivered", "picked_up"].includes(
-  //       currentState.toLowerCase(),
-  //     );
-  const isCancelable = currentState.toLowerCase() === "pending";
+  // Order is cancelable if it's in early stages
+  const isCancelable = [
+    "pending",
+    "preparing",
+    "ready",
+    "ready_for_pickup",
+  ].includes(currentState.toLowerCase());
 
   const handleCancelPress = () => {
     if (isCancelable) {
-      const targetId = (params._id as string) || (params.orderId as string);
+      const targetId = (params.orderId as string) || (params._id as string);
       router.push({
         pathname: "/screens/profile/cancel-reason",
         params: { orderId: targetId },
@@ -100,7 +97,7 @@ export default function OrderDetailsScreen() {
 
     try {
       // Prioritize the MongoDB _id (e.g. 69878a...)
-      const orderIdToSend = (params._id as string) || (params.orderId as string);
+      const orderIdToSend = (params.orderId as string) || (params._id as string);
 
       if (!orderIdToSend) {
         Alert.alert("Error", "Order ID not found");
@@ -276,7 +273,7 @@ export default function OrderDetailsScreen() {
         >
           <Ionicons name="chevron-back" size={24} color="#000" />
         </TouchableOpacity>
-        <Text className="text-xl font-bold text-gray-900">Cancel order</Text>
+        <Text className="text-xl font-bold text-gray-900">Order details</Text>
       </View>
 
       <ScrollView className="flex-1 px-4">

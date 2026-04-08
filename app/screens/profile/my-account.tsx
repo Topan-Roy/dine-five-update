@@ -99,7 +99,11 @@ export default function MyAccountScreen() {
     setIsLoading(true);
     try {
       let cleanPhone = (formData.phone || "").replace(/\D/g, "");
-      const fullPhone = `${formData.phonePrefix}${cleanPhone}`;
+      // Prevent double prefixing if the cleaned phone already starts with the prefix (without the +)
+      const prefixNoPlus = formData.phonePrefix.replace("+", "");
+      let fullPhone = cleanPhone.startsWith(prefixNoPlus) 
+        ? `+${cleanPhone}` 
+        : `${formData.phonePrefix}${cleanPhone}`;
 
       console.log("Saving profile data for:", formData.name, "with phone:", fullPhone);
 
@@ -115,7 +119,7 @@ export default function MyAccountScreen() {
         const match = /\.(\w+)$/.exec(filename);
         const type = match ? `image/${match[1]}` : `image`;
 
-        form.append("photo", {
+        form.append("profilePic", {
           uri: selectedImage,
           name: filename,
           type,
