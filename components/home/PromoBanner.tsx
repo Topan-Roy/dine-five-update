@@ -21,8 +21,8 @@ const FALLBACK_IMAGE =
 
 const DEFAULT_DEAL: Deal = {
   title: "35% OFF on Burgers!",
-  subtitle: "35% OFF on Burgers!",
-  ctaText: "Buy now",
+  subtitle: "Limited time offer",
+  ctaText: "Order Now",
   image: FALLBACK_IMAGE,
 };
 
@@ -126,37 +126,48 @@ export const PromoBanner = ({ deals = [] }: PromoBannerProps) => {
               key={`${index}-${title}`}
               style={{ width: BANNER_WIDTH, paddingHorizontal: 6 }}
             >
-              <View className="bg-[#F6D977] rounded-2xl px-4 py-4 min-h-[108px] overflow-hidden flex-row flex-1">
+              <View className="bg-[#F6D977] rounded-[28px] px-6 py-5 min-h-[125px] overflow-hidden flex-row flex-1 shadow-sm">
+                {/* Decorative background patterns */}
+                <View className="absolute -right-6 -top-6 w-32 h-32 rounded-full bg-white/20" />
+                <View className="absolute -left-4 -bottom-4 w-16 h-16 rounded-full bg-black/5" />
+                <View className="absolute right-1/4 bottom-0 w-12 h-12 rounded-full bg-white/10" />
+
                 <View className="flex-1 z-10 justify-center">
                   <Text
-                    className="text-[#4A3B00] text-[18px] font-bold leading-tight"
+                    className="text-[#3A2E00] text-[20px] font-extrabold leading-tight tracking-tight"
                     numberOfLines={2}
                   >
                     {title}
                   </Text>
                   <Text
-                    className="text-[#5D4A00] text-[12px] mt-1 mb-3"
+                    className="text-[#5D4A00] text-[13px] font-medium mt-1 mb-4 opacity-80"
                     numberOfLines={1}
                   >
                     {subtitle}
                   </Text>
                   <TouchableOpacity
                     activeOpacity={0.85}
-                    className="bg-[#F2BF2B] px-4 py-1.5 rounded-lg self-start"
+                    className="bg-[#222] px-5 py-2 rounded-xl self-start shadow-sm"
                   >
-                    <Text className="text-[#3E3000] text-[12px] font-semibold">
+                    <Text className="text-white text-[12px] font-bold">
                       {ctaText}
                     </Text>
                   </TouchableOpacity>
                 </View>
 
-                <View className="w-[40%] items-center justify-center relative">
-                  <View className="absolute w-24 h-24 rounded-full bg-[#BFD7A8] opacity-70" />
+                <View className="w-[45%] items-center justify-center relative">
+                  <View className="absolute w-28 h-28 rounded-full bg-white/40 shadow-sm" />
                   <Image
                     source={{ uri: image }}
-                    style={{ width: 110, height: 110 }}
+                    style={{ 
+                      width: 130, 
+                      height: 130, 
+                      marginBottom: -15, 
+                      marginRight: -10,
+                      transform: [{ rotate: '-4deg' }]
+                    }}
                     contentFit="contain"
-                    transition={300}
+                    transition={400}
                     cachePolicy="memory-disk"
                   />
                 </View>
@@ -168,12 +179,13 @@ export const PromoBanner = ({ deals = [] }: PromoBannerProps) => {
 
       {/* Pagination dots */}
       {list.length > 1 && (
-        <View className="flex-row justify-center mt-2 gap-1.5">
+        <View className="flex-row justify-center mt-3 gap-2">
           {list.map((_, i) => (
             <View
               key={i}
-              className={`h-1.5 rounded-full transition-all duration-300 ${i === activeIndex ? "w-4 bg-[#F2BF2B]" : "w-1.5 bg-gray-300"
-                }`}
+              className={`h-2 rounded-full transition-all duration-300 ${
+                i === activeIndex ? "w-6 bg-[#222]" : "w-2 bg-gray-300"
+              }`}
             />
           ))}
         </View>
