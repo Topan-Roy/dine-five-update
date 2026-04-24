@@ -1,4 +1,4 @@
-﻿import { useStore } from "@/stores/stores";
+import { useStore } from "@/stores/stores";
 import {
   type Restaurant,
   useRestaurantStore,
@@ -20,6 +20,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { PromoBanner } from "@/components/home/PromoBanner";
 
 type BannerData = {
   title: string;
@@ -96,7 +97,7 @@ const formatDistance = (distanceKm?: number) => {
 };
 
 const getCuisineLabel = (restaurant: Restaurant) =>
-  restaurant.cuisine?.filter(Boolean).join(" � ") || "Restaurant";
+  restaurant.cuisine?.filter(Boolean).join(" • ") || "Restaurant";
 
 function HomeHeader({
   name,
@@ -175,76 +176,6 @@ function SearchBar({
           className="flex-1 ml-2 text-sm text-gray-700"
         />
       </View>
-    </View>
-  );
-}
-
-function PromoBanner({ deals = [] }: { deals?: BannerData[] }) {
-  const [index, setIndex] = React.useState(0);
-  const list =
-    Array.isArray(deals) && deals.length > 0 ? deals : [FALLBACK_PROMO];
-  const deal = list[index] ?? FALLBACK_PROMO;
-
-  return (
-    <View className="mx-4 mb-5">
-      <ScrollView
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onMomentumScrollEnd={(e) => {
-          const i = Math.round(
-            e.nativeEvent.contentOffset.x /
-              (e.nativeEvent.layoutMeasurement.width || 1),
-          );
-          setIndex(Math.min(i, list.length - 1));
-        }}
-        contentContainerStyle={{ gap: 12, paddingRight: 16 }}
-      >
-        {list.map((d, i) => (
-          <View
-            key={i}
-            className="rounded-2xl overflow-hidden flex-row"
-            style={{
-              width: 320,
-              backgroundColor: "#FFF7E0",
-            }}
-          >
-            <View className="flex-1 flex-row items-center justify-between px-5 py-4">
-              <View className="flex-1">
-                <Text className="text-lg font-extrabold text-gray-900 leading-tight">
-                  {d.title}
-                </Text>
-                <Text className="text-sm font-semibold text-gray-700 mt-1 mb-3">
-                  {d.subtitle}
-                </Text>
-                <TouchableOpacity
-                  className="rounded-full px-5 py-2 self-start"
-                  style={{ backgroundColor: "#F5C518" }}
-                >
-                  <Text className="text-xs font-bold text-gray-900">
-                    {d.ctaText}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-              <View className="w-24 h-20 items-center justify-center relative">
-                <View
-                  className="absolute right-0 top-0 w-16 h-16 rounded-full opacity-30"
-                  style={{ backgroundColor: "#22C55E" }}
-                />
-                <View
-                  className="absolute right-2 bottom-2 w-12 h-12 rounded-full opacity-20"
-                  style={{ backgroundColor: "#16A34A" }}
-                />
-                <Image
-                  source={{ uri: d.image }}
-                  className="w-24 h-20"
-                  resizeMode="contain"
-                />
-              </View>
-            </View>
-          </View>
-        ))}
-      </ScrollView>
     </View>
   );
 }
@@ -355,7 +286,7 @@ function RestaurantCard({
       <View className="flex-row items-center mt-0.5 gap-1 flex-wrap">
         <Ionicons name="star" size={11} color="#F5C518" />
         <Text className="text-xs text-gray-500">{rating}</Text>
-        <Text className="text-xs text-gray-400">�</Text>
+        <Text className="text-xs text-gray-400">•</Text>
         <Text className="text-xs text-gray-500 flex-1" numberOfLines={1}>
           {cuisineLabel}
         </Text>
@@ -363,7 +294,7 @@ function RestaurantCard({
       </View>
 
       <Text className="text-xs text-gray-400 mt-0.5" numberOfLines={1}>
-        {distanceLabel || "�"}
+        {distanceLabel || "•"}
       </Text>
     </TouchableOpacity>
   );

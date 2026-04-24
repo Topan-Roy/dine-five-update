@@ -1405,31 +1405,48 @@ export const useStore = create((set, get) => ({
         `${API_BASE_URL}/api/v1/feed/banners`,
       ];
 
+      let allBanners: any[] = [];
+      const seenIds = new Set();
+
       for (const endpoint of endpoints) {
-        const response = await fetch(endpoint, {
-          method: "GET",
-          headers,
-        });
+        try {
+          const response = await fetch(endpoint, {
+            method: "GET",
+            headers,
+          });
 
-        const result = await response.json();
-        if (!response.ok) {
-          continue;
-        }
+          const result = await response.json();
+          if (!response.ok) {
+            continue;
+          }
 
-        if (Array.isArray(result?.data)) {
-          return result.data;
-        }
+          let banners: any[] = [];
+          if (Array.isArray(result?.data)) {
+            banners = result.data;
+          } else if (Array.isArray(result?.banners)) {
+            banners = result.banners;
+          } else if (Array.isArray(result)) {
+            banners = result;
+          } else if (result?.data) {
+            banners = [result.data];
+          } else if (result?.banner) {
+            banners = [result.banner];
+          }
 
-        if (Array.isArray(result)) {
-          return result;
-        }
-
-        if (result?.data) {
-          return [result.data];
+          // Aggregate and avoid duplicates if possible
+          banners.forEach((banner) => {
+            const id = banner?._id || banner?.id || JSON.stringify(banner);
+            if (!seenIds.has(id)) {
+              seenIds.add(id);
+              allBanners.push(banner);
+            }
+          });
+        } catch (err) {
+          console.log(`Error fetching from ${endpoint}:`, err);
         }
       }
 
-      return [];
+      return allBanners;
     } catch (error: any) {
       console.log("fetchBanners error:", error);
       return [];
