@@ -13,6 +13,7 @@ import {
   ActivityIndicator,
   Image,
   Modal,
+  RefreshControl,
   ScrollView,
   Text,
   TextInput,
@@ -41,6 +42,7 @@ const FALLBACK_PROMO: BannerData = {
   image:
     "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=300&q=80",
 };
+const DEFAULT_CATEGORIES = ["All", "Burger", "Pizza", "Donut"];
 
 const pickString = (...values: unknown[]): string => {
   for (const value of values) {
@@ -344,7 +346,7 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams();
 
-  const { fetchBanners, user } = useStore() as any;
+  const { fetchBanners, fetchProfile, user } = useStore() as any;
   const {
     location,
     locationLoading,
@@ -360,16 +362,60 @@ export default function HomeScreen() {
   const [activeCategory, setActiveCategory] = React.useState("All");
   const [bannerPayload, setBannerPayload] = React.useState<any>(null);
   const [currentLocationLabel, setCurrentLocationLabel] = React.useState("");
+  const [refreshing, setRefreshing] = React.useState(false);
+
+  const loadBannerData = React.useCallback(async () => {
+    try {
+      const payload = await fetchBanners?.();
+      setBannerPayload(payload ?? null);
+    } catch {
+      setBannerPayload(null);
+    }
+  }, [fetchBanners]);
+
+  const loadNearbyRestaurants = React.useCallback(
+    async (
+      targetLocation: { latitude: number; longitude: number } | null | undefined,
+    ) => {
+      if (!targetLocation) return;
+
+      await fetchNearbyRestaurants({
+        latitude: targetLocation.latitude,
+        longitude: targetLocation.longitude,
+        radius: 100000,
+        limit: 100,
+        sortBy: "distance",
+      });
+    },
+    [fetchNearbyRestaurants],
+  );
+
+  const handleRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+
+    try {
+      const nextLocationPromise = fetchLocation().catch(() => undefined);
+
+      await Promise.allSettled([
+        loadBannerData(),
+        fetchProfile?.(),
+        nextLocationPromise,
+      ]);
+
+      const latestLocation = useRestaurantStore.getState().location ?? location;
+      await loadNearbyRestaurants(latestLocation);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [fetchLocation, fetchProfile, loadBannerData, loadNearbyRestaurants, location]);
 
   React.useEffect(() => {
     fetchLocation();
   }, [fetchLocation]);
 
   React.useEffect(() => {
-    fetchBanners?.()
-      .then((payload: any) => setBannerPayload(payload))
-      .catch(() => setBannerPayload(null));
-  }, [fetchBanners]);
+    loadBannerData();
+  }, [loadBannerData]);
 
   React.useEffect(() => {
     if (params.category) {
@@ -416,18 +462,8 @@ export default function HomeScreen() {
   }, [location]);
 
   React.useEffect(() => {
-    if (!location) return;
-
-    fetchNearbyRestaurants({
-      latitude: location.latitude,
-      longitude: location.longitude,
-      radius: 100000,
-      limit: 100,
-      sortBy: "distance",
-    });
-  }, [fetchNearbyRestaurants, location]);
-
-  const DEFAULT_CATEGORIES = ["All", "Burger", "Pizza", "Donut"];
+    loadNearbyRestaurants(location);
+  }, [loadNearbyRestaurants, location]);
 
   const categories = React.useMemo(() => {
     const cuisineSet = new Set<string>(DEFAULT_CATEGORIES.slice(1));
@@ -578,6 +614,14 @@ export default function HomeScreen() {
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 100 }}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor="#F5C518"
+              colors={["#F5C518"]}
+            />
+          }
         >
           <HomeHeader
             name={userName}
