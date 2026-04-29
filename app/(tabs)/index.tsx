@@ -1,7 +1,5 @@
 import { Categories } from "@/components/home/Categories";
 import { HomeHeader } from "@/components/home/HomeHeader";
-import { PopularHotels } from "@/components/home/PopularHotels";
-import { PopularItems } from "@/components/home/PopularItems";
 import { PromoBanner } from "@/components/home/PromoBanner";
 import { SearchBar } from "@/components/home/SearchBar";
 import { useStore } from "@/stores/stores";
@@ -22,9 +20,8 @@ import {
   RefreshControl,
   ScrollView,
   Text,
-  TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 

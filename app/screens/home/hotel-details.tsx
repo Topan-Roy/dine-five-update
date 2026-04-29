@@ -103,20 +103,20 @@ const normalizeMenuSections = (payload: any): MenuSectionType[] => {
 
     const priceValue = toNumber(
       food?.baseRevenue ??
-        entry?.baseRevenue ??
-        food?.finalPriceTag ??
-        food?.price ??
-        entry?.finalPriceTag ??
-        entry?.price,
+      entry?.baseRevenue ??
+      food?.finalPriceTag ??
+      food?.price ??
+      entry?.finalPriceTag ??
+      entry?.price,
       NaN,
     );
     const etaValue = toNumber(
       food?.etaMinutes ??
-        food?.deliveryTime ??
-        food?.prepTime ??
-        entry?.etaMinutes ??
-        entry?.deliveryTime ??
-        entry?.prepTime,
+      food?.deliveryTime ??
+      food?.prepTime ??
+      entry?.etaMinutes ??
+      entry?.deliveryTime ??
+      entry?.prepTime,
       NaN,
     );
     const sectionTitle = pickString(

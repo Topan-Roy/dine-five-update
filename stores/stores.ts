@@ -791,7 +791,7 @@ export const useStore = create((set, get) => ({
 
       const result = await response.json();
       set({ isLoading: false });
-      
+
       if (result.success && Array.isArray(result.data)) {
         return result.data;
       }
