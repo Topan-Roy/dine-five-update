@@ -218,6 +218,7 @@ function MenuItem({
 function DetailBottomNav() {
   const router = useRouter();
   const pathname = usePathname();
+  const insets = useSafeAreaInsets();
 
   const tabs = [
     {
@@ -243,7 +244,10 @@ function DetailBottomNav() {
   ];
 
   return (
-    <View className="absolute bottom-0 left-0 right-0 mx-6 mb-4">
+    <View
+      className="absolute left-0 right-0 mx-6"
+      style={{ bottom: insets.bottom > 0 ? insets.bottom + 10 : 18 }}
+    >
       <View className="bg-white rounded-full shadow-lg flex-row justify-around items-center px-6 py-3">
         {tabs.map((tab) => (
           <TouchableOpacity

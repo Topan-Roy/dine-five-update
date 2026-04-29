@@ -15,7 +15,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 const toNumber = (value: unknown, fallback = 0): number => {
   if (typeof value === "number" && Number.isFinite(value)) return value;
@@ -188,6 +188,7 @@ export default function CardScreen() {
     clearCart,
     fetchStateTax,
   } = useStore() as any;
+  const insets = useSafeAreaInsets();
   const { location, fetchLocation } = useRestaurantStore();
   const [cartItems, setCartItems] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -626,7 +627,10 @@ export default function CardScreen() {
         </View>
       </ScrollView>
 
-      <View className="absolute bottom-[74px] left-3 right-3 bg-[#F7F6F2] pt-2">
+      <View
+        className="absolute left-3 right-3 bg-[#F7F6F2] pt-2"
+        style={{ bottom: insets.bottom > 0 ? insets.bottom + 80 : 80 }}
+      >
         <TouchableOpacity
           className="self-start flex-row items-center mb-3"
           onPress={async () => {
