@@ -773,6 +773,36 @@ export const useStore = create((set, get) => ({
     }
   },
 
+  fetchCategories: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const { accessToken } = get() as any;
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (accessToken) {
+        headers["Authorization"] = `Bearer ${accessToken}`;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/v1/categories`, {
+        method: "GET",
+        headers,
+      });
+
+      const result = await response.json();
+      set({ isLoading: false });
+      
+      if (result.success && Array.isArray(result.data)) {
+        return result.data;
+      }
+      return Array.isArray(result) ? result : [];
+    } catch (error: any) {
+      console.log("fetchCategories error", error);
+      set({ error: error.message, isLoading: false });
+      return [];
+    }
+  },
+
   fetchCurrentOrders: async () => {
     set({ isLoading: true, error: null });
 

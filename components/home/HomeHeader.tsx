@@ -16,7 +16,7 @@ export const HomeHeader = () => {
   }, [fetchProfile]);
 
   return (
-    <View className="flex-row items-center justify-between px-4 pt-2 pb-1 bg-[#F8F8F6]">
+    <View className="flex-row items-center justify-between px-5 pt-3 pb-3">
       <View className="flex-row items-center gap-3">
         <View className="w-11 h-11 rounded-full overflow-hidden bg-[#F1F1EF] items-center justify-center">
           <Image

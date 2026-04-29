@@ -1,10 +1,16 @@
+import { Categories } from "@/components/home/Categories";
+import { HomeHeader } from "@/components/home/HomeHeader";
+import { PopularHotels } from "@/components/home/PopularHotels";
+import { PopularItems } from "@/components/home/PopularItems";
+import { PromoBanner } from "@/components/home/PromoBanner";
+import { SearchBar } from "@/components/home/SearchBar";
 import { useStore } from "@/stores/stores";
 import {
   type Restaurant,
   useRestaurantStore,
 } from "@/stores/useRestaurantStore";
-import { Ionicons } from "@expo/vector-icons";
 import { getUserAvatarUri, normalizeImageUri } from "@/utils/userAvatar";
+import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -21,7 +27,6 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { PromoBanner } from "@/components/home/PromoBanner";
 
 type BannerData = {
   title: string;
@@ -100,140 +105,6 @@ const formatDistance = (distanceKm?: number) => {
 
 const getCuisineLabel = (restaurant: Restaurant) =>
   restaurant.cuisine?.filter(Boolean).join(" • ") || "Restaurant";
-
-function HomeHeader({
-  name,
-  location,
-  profileImage,
-  notificationCount = 1,
-}: {
-  name: string;
-  location: string;
-  profileImage?: string;
-  notificationCount?: number;
-}) {
-  const router = useRouter();
-
-  return (
-    <View className="flex-row items-center justify-between px-4 pt-2 pb-3">
-      <View className="flex-row items-center gap-3">
-        <View className="w-10 h-10 rounded-full bg-orange-400 items-center justify-center overflow-hidden">
-          {profileImage ? (
-            <Image
-              source={{ uri: profileImage }}
-              className="w-10 h-10 rounded-full"
-            />
-          ) : (
-            <Ionicons name="person" size={18} color="#fff" />
-          )}
-        </View>
-        <View className="max-w-[220px]">
-          <Text className="text-base font-bold text-gray-900" numberOfLines={1}>
-            {name}
-          </Text>
-          <View className="flex-row items-center gap-1">
-            <Ionicons name="location-outline" size={12} color="#9CA3AF" />
-            <Text className="text-xs text-gray-400" numberOfLines={1}>
-              {location}
-            </Text>
-          </View>
-        </View>
-      </View>
-      <TouchableOpacity
-        onPress={() => router.push("/screens/home/notifications")}
-        className="w-9 h-9 rounded-full border border-gray-200 items-center justify-center relative"
-      >
-        <Ionicons name="notifications-outline" size={18} color="#374151" />
-        {notificationCount > 0 && (
-          <View
-            className="absolute -top-0.5 -right-0.5 min-w-[14] h-[14] rounded-full bg-red-500 items-center justify-center px-1"
-            style={{ minWidth: 14 }}
-          >
-            <Text className="text-[9px] font-bold text-white">
-              {notificationCount > 9 ? "9+" : notificationCount}
-            </Text>
-          </View>
-        )}
-      </TouchableOpacity>
-    </View>
-  );
-}
-
-function SearchBar({
-  searchText,
-  onSearch,
-}: {
-  searchText: string;
-  onSearch: (value: string) => void;
-}) {
-  return (
-    <View className="mx-4 mb-4">
-      <View className="flex-row items-center bg-gray-100 rounded-full px-4 h-11">
-        <Ionicons name="search-outline" size={18} color="#9CA3AF" />
-        <TextInput
-          value={searchText}
-          onChangeText={onSearch}
-          placeholder="Search dishes, restaurants"
-          placeholderTextColor="#9CA3AF"
-          className="flex-1 ml-2 text-sm text-gray-700"
-        />
-      </View>
-    </View>
-  );
-}
-
-function Categories({
-  active,
-  categories,
-  onChange,
-}: {
-  active: string;
-  categories: string[];
-  onChange: (value: string) => void;
-}) {
-  return (
-    <View className="mb-5">
-      <View className="flex-row justify-between items-center px-4 mb-3">
-        <Text className="text-base font-bold text-gray-900">Top Categories</Text>
-        <TouchableOpacity>
-          <Text className="text-sm font-semibold" style={{ color: "#F5C518" }}>
-            View all
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}
-      >
-        {categories.map((category) => {
-          const isActive = category === active;
-
-          return (
-            <TouchableOpacity
-              key={category}
-              onPress={() => onChange(category)}
-              className="rounded-full px-4 py-2"
-              style={{
-                backgroundColor: isActive ? "#F5C518" : "transparent",
-                borderWidth: isActive ? 0 : 1,
-                borderColor: "#E5E7EB",
-              }}
-            >
-              <Text
-                className="text-sm font-semibold"
-                style={{ color: isActive ? "#1F2937" : "#6B7280" }}
-              >
-                {category}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
-    </View>
-  );
-}
 
 function RestaurantCard({
   restaurant,
@@ -341,12 +212,14 @@ function Section({
   );
 }
 
+
+
 export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams();
 
-  const { fetchBanners, fetchProfile, user } = useStore() as any;
+  const { fetchBanners, fetchProfile, fetchCategories, user } = useStore() as any;
   const {
     location,
     locationLoading,
@@ -361,6 +234,7 @@ export default function HomeScreen() {
   const [filterModalVisible, setFilterModalVisible] = React.useState(false);
   const [activeCategory, setActiveCategory] = React.useState("All");
   const [bannerPayload, setBannerPayload] = React.useState<any>(null);
+  const [dynamicCategories, setDynamicCategories] = React.useState<any[]>([]);
   const [currentLocationLabel, setCurrentLocationLabel] = React.useState("");
   const [refreshing, setRefreshing] = React.useState(false);
 
@@ -372,6 +246,15 @@ export default function HomeScreen() {
       setBannerPayload(null);
     }
   }, [fetchBanners]);
+
+  const loadCategories = React.useCallback(async () => {
+    try {
+      const data = await fetchCategories?.();
+      setDynamicCategories(data || []);
+    } catch (error) {
+      console.log("Error loading categories:", error);
+    }
+  }, [fetchCategories]);
 
   const loadNearbyRestaurants = React.useCallback(
     async (
@@ -398,6 +281,7 @@ export default function HomeScreen() {
 
       await Promise.allSettled([
         loadBannerData(),
+        loadCategories(),
         fetchProfile?.(),
         nextLocationPromise,
       ]);
@@ -415,7 +299,8 @@ export default function HomeScreen() {
 
   React.useEffect(() => {
     loadBannerData();
-  }, [loadBannerData]);
+    loadCategories();
+  }, [loadBannerData, loadCategories]);
 
   React.useEffect(() => {
     if (params.category) {
@@ -466,19 +351,22 @@ export default function HomeScreen() {
   }, [loadNearbyRestaurants, location]);
 
   const categories = React.useMemo(() => {
-    const cuisineSet = new Set<string>(DEFAULT_CATEGORIES.slice(1));
+    const cuisineSet = new Set<string>();
 
+    // Add categories from API
+    dynamicCategories.forEach((cat: any) => {
+      if (cat.categoryName) cuisineSet.add(cat.categoryName);
+    });
+
+    // Add categories from restaurants
     restaurants.forEach((restaurant) => {
       restaurant.cuisine.forEach((cuisine) => {
-        const normalized = pickString(cuisine);
-        if (normalized && !DEFAULT_CATEGORIES.includes(normalized)) {
-          cuisineSet.add(normalized);
-        }
+        if (cuisine) cuisineSet.add(cuisine);
       });
     });
 
     return ["All", ...Array.from(cuisineSet)];
-  }, [restaurants]);
+  }, [dynamicCategories, restaurants]);
 
   React.useEffect(() => {
     if (!categories.includes(activeCategory)) {
@@ -633,9 +521,9 @@ export default function HomeScreen() {
           <PromoBanner deals={promoDeals ?? [FALLBACK_PROMO]} />
 
           <Categories
-            active={activeCategory}
+            activeCategory={activeCategory}
             categories={categories}
-            onChange={setActiveCategory}
+            onCategoryChange={setActiveCategory}
           />
 
           {isInitialLoading && (

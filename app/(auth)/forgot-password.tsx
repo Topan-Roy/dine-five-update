@@ -112,8 +112,8 @@ const ForgotPassword = () => {
               {/* Continue button */}
               <View className="mt-14 mb-4">
                 {isLoading ? (
-                  <View className="items-center py-4 bg-[#D32F1E] rounded-full">
-                    <ActivityIndicator color="white" />
+                  <View className="items-center py-4 bg-[#F5C518] rounded-full">
+                    <ActivityIndicator color="black" />
                   </View>
                 ) : (
                   <GradientButton title="Continue" onPress={handleSendEmail} />
